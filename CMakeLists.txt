@@ -40,5 +40,21 @@ target_link_libraries(LudumDare50
   PRIVATE ftxui::component # Not needed for this example.
 )
 
-install(TARGETS LudumDare50 RUNTIME DESTINATION "bin")
+if(EMSCRIPTEN)
+  message("EMSCRIPTEN: Enabled")
+  target_link_options(component PUBLIC "SHELL: -s TOTAL_MEMORY=33554432")
+  target_link_options(component PUBLIC "SHELL: -s ASSERTIONS=1")
+endif()
 
+# if(EMSCRIPTEN)
+#   message("EMSCRIPTEN: Enabled")
+#   set(CMAKE_CXX_FLAGS  "-O3 -g4 -lwebsocket.js -s ASSERTIONS=2 -s DEMANGLE_SUPPORT=1")
+
+#   set_target_properties(LudumDare50 PROPERTIES SUFFIX ".html")
+#   set_target_properties(LudumDare50 PROPERTIES LINK_FLAGS "-s ASYNCIFY -s ALLOW_MEMORY_GROWTH=0 -s USE_PTHREADS=1 -s WASM_MEM_MAX=536870912 -s TOTAL_MEMORY=536870912 -pthread -Wl,--shared-memory,--no-check-features -s PTHREAD_POOL_SIZE=2    -s WASM=1 -s BINARYEN_METHOD='native-wasm'")
+# else()
+#   message("EMSCRIPTEN: Disabled")
+# endif()
+
+
+install(TARGETS LudumDare50 RUNTIME DESTINATION "bin")

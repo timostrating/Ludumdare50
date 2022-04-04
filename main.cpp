@@ -57,7 +57,7 @@ int mouse_y = 10;
 int lives = 1;
 int bulletsLeft = 3;
 
-int current_level = 1;
+int current_level = 0;
 int max_level = 1;
 bool in_level = false;
 
@@ -73,6 +73,7 @@ int lastshot_time = -1000;
 int finished_timer = -1;
 int map_transition_start = 0;
 
+bool openanimationFinished = false;
 
 
 void level1() {
@@ -206,9 +207,9 @@ void level4() {
 
   tanks.push_back({120, 50, 3});
   tanks.push_back({70, 20, 3});
-  tanks.push_back({80, 20, 2});
+  tanks.push_back({90, 20, 2});
   tanks.push_back({70, 80, 3});
-  tanks.push_back({80, 80, 2});
+  tanks.push_back({90, 80, 2});
 
   int tmp[25][70] = {
     {2,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,3 },
@@ -377,9 +378,83 @@ int main(int argc, const char* argv[]) {
 
   auto levelSelect = Renderer([&] {
     auto c = Canvas(screen_width, screen_height);
-    int size = 20;
 
-    double map_transition = ((double)(current_time - map_transition_start)) / 20.0;
+    if (current_level == 0) {
+      int posd = 100 - current_time;
+      if (posd < -100) { current_level = 1; current_time = 0; openanimationFinished = true; }
+
+      c.DrawText(0,std::max(20,posd) + 0,  R"(                            _-o#&&*''''?d:>b\_                        )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 4,  R"(                      _o/"`''  '',, dMF9MMMMMHo_                      )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 8,  R"(                   .o&#'        `"MbHMMMMMMMMMMMHo.                   )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 12, R"(                 .o"" '         vodM*$&&HMMMMMMMMMM?.                 )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 16, R"(                ,'              $M&ood,~'`(&##MMMMMMH\                )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 20, R"(               /               ,MMMMMMM#b?#bobMMMMHMMML               )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 24, R"(              &              ?MMMMMMMMMMMMMMMMM7MMM$R*Hk              )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 28, R"(             ?$.            :MMMMMMMMMMMMMMMMMMM/HMMM|`*L             )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 32, R"(            |               |MMMMMMMMMMMMMMMMMMMMbMH'   T,            )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 36, R"(            $H#:            `*MMMMMMMMMMMMMMMMMMMMb#}'  `?            )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 40, R"(            ]MMH#             ""*""""*#MMMMMMMMMMMMM'    -            )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 44, R"(            MMMMMb_                   |MMMMMMMMMMMP'     :            )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 48, R"(            HMMMMMMMHo                 `MMMMMMMMMT       .            )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 52, R"(            ?MMMMMMMMP                  9MMMMMMMM}       -            )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 56, R"(            -?MMMMMMM                  |MMMMMMMMM?,d-    '            )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 60, R"(             :|MMMMMM-                 `MMMMMMMT .M|.   :             )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 64, R"(              .9MMM[                    &MMMMM*' `'    .              )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 68, R"(               :9MMk                    `MMM#"        -               )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 72, R"(                 &M}                     `          .-                )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 76, R"(                  `&.                             .                   )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 80, R"(                    `~,   .                     ./                    )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 84, R"(                        . _                  .-                       )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 88, R"(                          '`--._,dd###pp=""'                          )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + 92, R"(░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░)", Color::Green4);
+
+      int w = 4, h = 3;
+      int cw = screen_width / 2, ch = screen_height / 2;
+      float t = std::min(1.0f, std::max(0.0f, (((float)current_time) / 200.0f) - 0.5f) * 2.0f);
+
+      if ( t > 0.0f) {
+        c.DrawPointLine(cw-w, ch+h, cw+w, ch+h, Color::White);
+        c.DrawPointLine(cw+w, ch+h, cw+w, ch-h, Color::White);
+        c.DrawPointLine(cw+w, ch-h, cw-w, ch-h, Color::White);
+        c.DrawPointLine(cw-w, ch-h, cw-w, ch+h, Color::White);
+
+        c.DrawPointLine(cw-w, ch-h, linear_blend(cw-w, 56, t),linear_blend(ch-h, 2, t), Color::White);
+        c.DrawPointLine(cw+w, ch-h, linear_blend(cw+w,140, t),linear_blend(ch-h,12, t), Color::White);
+        c.DrawPointLine(cw+w, ch+h, linear_blend(cw+w, 96, t),linear_blend(ch+h,96, t), Color::White);
+        c.DrawPointLine(cw-w, ch+h, linear_blend(cw-w,  0, t),linear_blend(ch+h,96, t), Color::White);
+
+        c.DrawPointLine(linear_blend(cw-w, 56, t),linear_blend(ch-h, 2, t), linear_blend(cw+w,140, t),linear_blend(ch-h,12, t), Color::White);
+        c.DrawPointLine(linear_blend(cw+w,140, t),linear_blend(ch-h,12, t), linear_blend(cw+w, 96, t),linear_blend(ch+h,96, t), Color::White);
+        c.DrawPointLine(linear_blend(cw+w, 96, t),linear_blend(ch+h,96, t), linear_blend(cw-w,  0, t),linear_blend(ch+h,96, t), Color::White);
+        c.DrawPointLine(linear_blend(cw-w,  0, t),linear_blend(ch+h,96, t), linear_blend(cw-w, 56, t),linear_blend(ch-h, 2, t), Color::White);
+      }
+
+
+      return canvas(std::move(c));
+    }
+
+    if (current_level == 5) {
+      int post = 28;
+      c.DrawText(0,post + 0,  R"(               [        WHILE DEATH IS INEVITABLE         ]           )", Color::White);
+      c.DrawText(0,post + 4,  R"(               [ WE CAN ATLEAST TRY TO NOT KILL EACHOTHER ]           )", Color::White);
+      c.DrawText(0,post + 8,  R"(                                                                      )", Color::White);
+      c.DrawText(0,post + 12, R"(                                             [       ]                )", Color::White);
+      c.DrawText(0,post + 16, R"(                                                                      )", Color::White);
+      c.DrawText(0,post + 20, R"(                                                       [   ]          )", Color::White);
+      c.DrawText(0,post + 24, R"(              *   %               *                                   )", Color::White);
+      c.DrawText(0,post + 28, R"(              % *                        *                    [ ]     )", Color::White);
+      c.DrawText(0,post + 32, R"(               *% %                  %                                )", Color::White);
+      c.DrawText(0,post + 36, R"(       ____|____*$____\_____        *  *                         |    )", Color::White);
+      c.DrawText(0,post + 40, R"(      / ___________________ \        *% %            _                )", Color::White);
+      c.DrawText(0,post + 44, R"(      \/ _===============_ \/       __*$_ $|===========+        /     )", Color::White);
+      c.DrawText(0,post + 48, R"(        "-===============-"       \_______/               ==mmm0      )", Color::White);
+      c.DrawText(0,post + 52, R"(░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░)", Color::White);
+      
+      return canvas(std::move(c));
+    }    
+
+    int size = 20;
+    double map_transition = ((double)(current_time - map_transition_start)) / 25.0;
 
     float my = (mouse_y - 95) / -5.f;
     float mx = (mouse_x - 3 * my) / 5.f;
@@ -507,7 +582,7 @@ int main(int argc, const char* argv[]) {
           bullet.start_y = bullet.y;
           bullet.start_time = current_time;
         }} 
-      if(bullet.from_enemy && std::abs(bullet.x - my_x) < 2 && std::abs(bullet.y - my_y) < 2) { bullet.hit = true; lives = 0;}
+      if(bullet.from_enemy && std::abs(bullet.x - my_x) < 2 && std::abs(bullet.y - my_y) < 2) { bullet.hit = true; lives = 0; } // bullet hit player
 
 
       c.DrawText(bullet.x, bullet.y, bullet.hit ? "x" : "*", bullet.from_enemy ? Color::Red : Color::Blue);
@@ -604,46 +679,7 @@ int main(int argc, const char* argv[]) {
     c.DrawText(20,16,"░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░", Color::Green4);
 
     int post = current_time % 30;
-
-c.DrawText(0,post + 0,  R"(                _-o#&&*''''?d:>b\_            )", Color::Green4);
-c.DrawText(0,post + 4,  R"(          _o/"`''  '',, dMF9MMMMMHo_          )", Color::Green4);
-c.DrawText(0,post + 8,  R"(       .o&#'        `"MbHMMMMMMMMMMMHo.       )", Color::Green4);
-c.DrawText(0,post + 12, R"(     .o"" '         vodM*$&&HMMMMMMMMMM?.     )", Color::Green4);
-c.DrawText(0,post + 16, R"(    ,'              $M&ood,~'`(&##MMMMMMH\    )", Color::Green4);
-c.DrawText(0,post + 20, R"(   /               ,MMMMMMM#b?#bobMMMMHMMML   )", Color::Green4);
-c.DrawText(0,post + 24, R"(  &              ?MMMMMMMMMMMMMMMMM7MMM$R*Hk  )", Color::Green4);
-c.DrawText(0,post + 28, R"( ?$.            :MMMMMMMMMMMMMMMMMMM/HMMM|`*L )", Color::Green4);
-c.DrawText(0,post + 32, R"(|               |MMMMMMMMMMMMMMMMMMMMbMH'   T,)", Color::Green4);
-c.DrawText(0,post + 36, R"($H#:            `*MMMMMMMMMMMMMMMMMMMMb#}'  `?)", Color::Green4);
-c.DrawText(0,post + 40, R"(]MMH#             ""*""""*#MMMMMMMMMMMMM'    -)", Color::Green4);
-c.DrawText(0,post + 44, R"(MMMMMb_                   |MMMMMMMMMMMP'     :)", Color::Green4);
-c.DrawText(0,post + 48, R"(HMMMMMMMHo                 `MMMMMMMMMT       .)", Color::Green4);
-c.DrawText(0,post + 52, R"(?MMMMMMMMP                  9MMMMMMMM}       -)", Color::Green4);
-c.DrawText(0,post + 56, R"(-?MMMMMMM                  |MMMMMMMMM?,d-    ')", Color::Green4);
-c.DrawText(0,post + 60, R"( :|MMMMMM-                 `MMMMMMMT .M|.   : )", Color::Green4);
-c.DrawText(0,post + 64, R"(  .9MMM[                    &MMMMM*' `'    .  )", Color::Green4);
-c.DrawText(0,post + 68, R"(   :9MMk                    `MMM#"        -   )", Color::Green4);
-c.DrawText(0,post + 72, R"(     &M}                     `          .-    )", Color::Green4);
-c.DrawText(0,post + 76, R"(      `&.                             .       )", Color::Green4);
-c.DrawText(0,post + 80, R"(        `~,   .                     ./        )", Color::Green4);
-c.DrawText(0,post + 84, R"(            . _                  .-           )", Color::Green4);
-c.DrawText(0,post + 88, R"(              '`--._,dd###pp=""'              )", Color::Green4);
-c.DrawText(0,post + 92, R"(                                              )", Color::Green4);
   
-    // int post = 0;
-    // c.DrawText(0,post + 0,  R"(         [        WHILE DEATH IS INEVITABLE         ]         )", Color::White);
-    // c.DrawText(0,post + 4,  R"(         [ WE CAN ATLEAST TRY TO NOT KILL EACHOTHER ]         )", Color::White);
-    // c.DrawText(0,post + 8,  R"(                                                 [   ]        )", Color::White);
-    // c.DrawText(0,post + 12, R"(        *   %               *                                 )", Color::White);
-    // c.DrawText(0,post + 16, R"(        % *                        *                    [ ]   )", Color::White);
-    // c.DrawText(0,post + 20, R"(         *% %                  %                              )", Color::White);
-    // c.DrawText(0,post + 24, R"( ____|____*$____\_____        *  *                         |  )", Color::White);
-    // c.DrawText(0,post + 28, R"(/ ___________________ \        *% %            _              )", Color::White);
-    // c.DrawText(0,post + 32, R"(\/ _===============_ \/       __*$_ $|===========+        /   )", Color::White);
-    // c.DrawText(0,post + 36, R"(  "-===============-"       \_______/               ==mmm0    )", Color::White);
-    // c.DrawText(0,post + 40, R"(░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░)", Color::White);
-    // c.DrawText(0,post + 44, R"()", Color::Red);
-
     int dist = 0;
     if (finished_timer != -1) { dist = linear_blend(120, 0.0, ((float)(finished_timer - current_time)) / 100.0); }
 
@@ -670,9 +706,12 @@ c.DrawText(0,post + 92, R"(                                              )", Col
   });
 
   auto information_screen = Renderer([&] {
-    if (in_level == false) {return vbox({ text("              ")}); }
+    if (openanimationFinished != true) { return vbox({ text("                   "), }); }
 
     return vbox({
+            text("Hover & click to "),
+            text("       select level"),
+            text(""),
             text("Level: " + std::to_string(current_level)),
             text("Current time: " + std::to_string(current_time)),
             text(""),
@@ -681,8 +720,17 @@ c.DrawText(0,post + 92, R"(                                              )", Col
             text(""),
             text("Max level: " + std::to_string(max_level)),
             text(""),
-            text("WASD to move"),
+            text(""),
+            text("Mouse to move"),
             text("Left Click to shoot"),
+            text(""),
+            text(""),
+            text(""),
+            text("HINT: Life is hard"),
+            text("but getting hit"),
+            text("by an enemy bullet"),
+            text("would not make it"),
+            text("better."),
           });
   });
 
@@ -701,12 +749,23 @@ c.DrawText(0,post + 92, R"(                                              )", Col
       mouse_x = std::max(2, std::min(mouse_x, screen_width - 4));
       mouse_y = std::max(4, std::min(mouse_y, screen_height - 8));
     }
-    if (e.is_character()) {
-      if (e.character().compare("w")) { if(noCollision(my_y+1,my_x+0)) my_y ++; }
-      if (e.character().compare("s")) { if(noCollision(my_y-1,my_x+0)) my_y --; }
-      if (e.character().compare("a")) { if(noCollision(my_y+0,my_x+1)) my_x ++; }
-      if (e.character().compare("d")) { if(noCollision(my_y+0,my_x-1)) my_x --; }
+
+    if (current_time % 4 == 0) {
+      if (std::abs(mouse_x - my_x) > std::abs(mouse_y - my_y)){
+        if ((mouse_x - my_x) >=  2) {if(noCollision(my_y+0,my_x+1)) my_x += 1; }
+        if ((mouse_x - my_x) <= -2) {if(noCollision(my_y+0,my_x-1)) my_x -= 1; }
+      } else {
+        if ((mouse_y - my_y) >=  4) {if(noCollision(my_y+1,my_x+0)) my_y += 2; }
+        if ((mouse_y - my_y) <= -4) {if(noCollision(my_y-1,my_x+0)) my_y -= 2; }
+      }
     }
+
+    // if (e.is_character()) {
+    //   if (e.character().compare("w")) { if(noCollision(my_y+1,my_x+0)) my_y ++; }
+    //   if (e.character().compare("s")) { if(noCollision(my_y-1,my_x+0)) my_y --; }
+    //   if (e.character().compare("a")) { if(noCollision(my_y+0,my_x+1)) my_x ++; }
+    //   if (e.character().compare("d")) { if(noCollision(my_y+0,my_x-1)) my_x --; }
+    // }
     if (e.is_mouse()) {
       if (e.mouse().button == Mouse::Button::Left && e.mouse().motion == Mouse::Motion::Released) { 
         if (in_level == true) { shoot(); }
