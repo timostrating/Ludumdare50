@@ -1,0 +1,125 @@
+<!DOCTYPE html> <html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Terminal Thanks</title>
+    <script src="https://cdn.jsdelivr.net/npm/xterm@4.18.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-webgl@0.11.4/lib/xterm-addon-webgl.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@4.11.0/css/xterm.css"></link>
+  </head>
+  <body>
+    <script id="example_script"></script>
+    <div class="page">
+      <h1> <a href="https://github.com/timostrating/Ludumdare50">Terminal Thanks </a></h1>
+      <p>
+        Sending mouse inputs to a terminal may be very lacky. Wiggle your mouse if the Tank is not moving.
+        <button onclick="muteSound()">mute sound</button>
+      </p>
+      <div id="terminal"></div>
+    </div>
+  </body>
+  <script>
+
+    const url_search_params = new URLSearchParams(window.location.search);
+    const example = url_search_params.get("file") || "dom/color_gallery";
+
+    let stdin_buffer = [];
+    const stdin = () => {
+      return stdin_buffer.shift() || 0;
+    }
+
+    let stdout_buffer = [];
+    const stdout = code => {
+      if (code == 0) {
+        term.write(new Uint8Array(stdout_buffer));
+        stdout_buffer = [];
+      } else {
+        stdout_buffer.push(code)
+      }
+    }
+    let stderrbuffer = [];
+    const stderr = code => {
+      if (code == 0 || code == 10) {
+        console.error(String.fromCodePoint(...stderrbuffer));
+        stderrbuffer = [];
+      } else {
+        stderrbuffer.push(code)
+      }
+    }
+    const term = new Terminal();
+    term.open(document.querySelector('#terminal'));
+    term.resize(140,43);
+    term.loadAddon(new (WebglAddon.WebglAddon)());
+    const onBinary = e => {
+      for(c of e)
+        stdin_buffer.push(c.charCodeAt(0));
+    }
+    term.onBinary(onBinary);
+    term.onData(onBinary)
+    window.Module = {
+      preRun: () => {
+        FS.init(stdin, stdout, stderr);
+      },
+      postRun: [],
+      onRuntimeInitialized: () => {},
+    };
+
+    const words = example.split('/')
+    words[1] = 
+    document.querySelector("#example_script").src = "main.js";
+    
+    var audio = new Audio("music.mp3");
+
+    function muteSound() {
+      audio.pause();
+    }
+    
+
+    var soundPlaying = false;
+    window.onclick = function() {
+      if (!soundPlaying) {
+        soundPlaying = true;
+        audio.loop = true;
+        audio.play();
+      }
+    }
+
+  </script>
+
+  <style>
+
+    body {
+      background-color:black;
+      padding:20px;
+      font-family: Helvetica, sans-serif;
+      font-size: 130%;
+    }
+
+    .page {
+      max-width:1300px;
+      margin: auto;
+    }
+
+    h1 {
+      text-decoration: underline;
+    }
+    
+    a {
+      color: green;
+    }
+
+    p {
+      color: green;
+    }
+
+    #terminal {
+      padding:10px;
+      border:none;
+      background-color:black;
+      padding:auto;
+    }
+    .xterm-viewport {
+      overflow: hidden;
+    }
+  </style>
+
+</html>

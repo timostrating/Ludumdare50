@@ -6,6 +6,7 @@
 #include <utility>  // for move
 #include <vector>   // for vector, __alloc_traits<>::value_type
 #include <cstring>
+#include <chrono>
 
 #include "ftxui/component/component.hpp"  // for Renderer, CatchEvent, Horizontal, Menu, Tab
 #include "ftxui/component/component_base.hpp"      // for ComponentBase
@@ -51,6 +52,9 @@ const int screen_block_height = screen_height/4;
 int my_x = 20;
 int my_y = 50;
 
+float my_precise_x = 20.0f;
+float my_precise_y = 50.0f;
+
 int mouse_x = 10;
 int mouse_y = 10;
 
@@ -67,7 +71,7 @@ std::vector<Tank> tanks;
 std::vector<Bullet> bullets;
 int screen[screen_height/4][screen_width/2];
 
-int current_time = 0;
+int current_frame = 0;
 int lastshot_time = -1000;
 
 int finished_timer = -1;
@@ -75,9 +79,13 @@ int map_transition_start = 0;
 
 bool openanimationFinished = false;
 
+// auto previous_chrono = std::chrono::system_clock::now();
+// auto current_chrono = std::chrono::system_clock::now();
+// std::chrono::duration<double> difftime; 
 
 void level1() {
   my_x = 20; my_y = 50;
+  my_precise_x = 20; my_precise_y = 50;
 
   tanks.push_back({120, 50, 0});
 
@@ -118,6 +126,7 @@ void level1() {
 
 void level2() {
   my_x = 20; my_y = 50;
+  my_precise_x = 20; my_precise_y = 50;
 
   tanks.push_back({120, 50, 1});
   tanks.push_back({70, 25, 1});
@@ -160,6 +169,7 @@ void level2() {
 
 void level3() {
   my_x = 20; my_y = 50;
+  my_precise_x = 20; my_precise_y = 50;
 
   tanks.push_back({120, 50, 2});
   tanks.push_back({60, 20, 1});
@@ -204,6 +214,7 @@ void level3() {
 
 void level4() {
   my_x = 20; my_y = 50;
+  my_precise_x = 20; my_precise_y = 50;
 
   tanks.push_back({120, 50, 3});
   tanks.push_back({70, 20, 3});
@@ -248,6 +259,7 @@ void level4() {
 
 void level5() {
   my_x = 20; my_y = 50;
+  my_precise_x = 20; my_precise_y = 50;
 
   tanks.push_back({120, 50, 3});
   tanks.push_back({60, 20, 4});
@@ -305,16 +317,22 @@ void loadLevel(int level) {
   in_level = true;
 }
 
+long double curtime() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+    std::chrono::system_clock::now().time_since_epoch()
+  ).count();
+}
+
 void shoot() {
   if (bulletsLeft > 0) {
-    lastshot_time = current_time;
+    lastshot_time = current_frame;
     bulletsLeft --;
-    bullets.push_back({my_x, my_y, my_x, my_y, mouse_x, mouse_y, current_time, false, false});
+    bullets.push_back({my_x, my_y, my_x, my_y, mouse_x, mouse_y, current_frame, false, false});
   }
 }
 
 void enemyBullet(int from_x, int from_y, int to_x, int to_y, bool highSpeed) {
-  bullets.push_back({from_x, from_y, from_x, from_y, to_x, to_y, current_time, true, highSpeed});
+  bullets.push_back({from_x, from_y, from_x, from_y, to_x, to_y, current_frame, true, highSpeed});
 }
 
 float linear_blend(float a, float b, float t) {
@@ -322,7 +340,7 @@ float linear_blend(float a, float b, float t) {
 }
 
 void finishedLevel() { 
-  finished_timer = current_time + 100;
+  finished_timer = current_frame + 100;
   map_transition_start = finished_timer;
 }
 
@@ -380,9 +398,14 @@ int main(int argc, const char* argv[]) {
     auto c = Canvas(screen_width, screen_height);
 
     if (current_level == 0) {
-      int posd = 100 - current_time;
-      if (posd < -100) { current_level = 1; current_time = 0; openanimationFinished = true; }
+      int posd = 100 - current_frame;
+      if (posd < -100) { current_level = 1; current_frame = 0; openanimationFinished = true; }
 
+      if (posd > 0) {
+      c.DrawText(0,std::max(20,posd) + -20, R"( ___  ___  __                            ___                      __  )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + -16, R"(  |  |__  |__)  |\/| | |\ |  /\  |        |  |__|  /\  |\ | |__/ /__` )", Color::Green4);
+      c.DrawText(0,std::max(20,posd) + -12, R"(  |  |___ |  \  |  | | | \| /~~\ |___     |  |  | /~~\ | \| |  \ .__/ )", Color::Green4);
+      }
       c.DrawText(0,std::max(20,posd) + 0,  R"(                            _-o#&&*''''?d:>b\_                        )", Color::Green4);
       c.DrawText(0,std::max(20,posd) + 4,  R"(                      _o/"`''  '',, dMF9MMMMMHo_                      )", Color::Green4);
       c.DrawText(0,std::max(20,posd) + 8,  R"(                   .o&#'        `"MbHMMMMMMMMMMMHo.                   )", Color::Green4);
@@ -410,7 +433,7 @@ int main(int argc, const char* argv[]) {
 
       int w = 4, h = 3;
       int cw = screen_width / 2, ch = screen_height / 2;
-      float t = std::min(1.0f, std::max(0.0f, (((float)current_time) / 200.0f) - 0.5f) * 2.0f);
+      float t = std::min(1.0f, std::max(0.0f, (((float)current_frame) / 200.0f) - 0.5f) * 2.0f);
 
       if ( t > 0.0f) {
         c.DrawPointLine(cw-w, ch+h, cw+w, ch+h, Color::White);
@@ -454,7 +477,7 @@ int main(int argc, const char* argv[]) {
     }    
 
     int size = 20;
-    double map_transition = ((double)(current_time - map_transition_start)) / 25.0;
+    double map_transition = ((double)(current_frame - map_transition_start)) / 25.0;
 
     float my = (mouse_y - 95) / -5.f;
     float mx = (mouse_x - 3 * my) / 5.f;
@@ -514,7 +537,7 @@ int main(int argc, const char* argv[]) {
       finishedLevel();
     }
 
-    if (finished_timer != -1 && finished_timer < current_time || lives == 0) {
+    if (finished_timer != -1 && finished_timer < current_frame || lives == 0) {
       in_level = false;
       if (lives > 0) { max_level = std::max(current_level + 1, max_level); }
       tanks.clear();
@@ -534,20 +557,20 @@ int main(int argc, const char* argv[]) {
       if (tank.type == 4) { color = Color::White; }
       c.DrawText(tank.x, tank.y, "█", color);
 
-      if (tank.type == 0 && current_time % 200 == 199) { enemyBullet(tank.x, tank.y, my_x, my_y, false); }
-      if (tank.type == 1 && current_time % 200 == 49 + std::rand() % 50) { enemyBullet(tank.x, tank.y, my_x, my_y, false); }
-      if (tank.type == 2 && current_time % 100 == 49 + std::rand() % 50) { enemyBullet(tank.x, tank.y, my_x, my_y, true); }
-      if (tank.type == 3 && current_time % 100 == 49 + std::rand() % 50) { enemyBullet(tank.x, tank.y, my_x, my_y, true); }
+      if (tank.type == 0 && current_frame % 200 == 199) { enemyBullet(tank.x, tank.y, my_x, my_y, false); }
+      if (tank.type == 1 && current_frame % 200 == 49 + std::rand() % 50) { enemyBullet(tank.x, tank.y, my_x, my_y, false); }
+      if (tank.type == 2 && current_frame % 100 == 49 + std::rand() % 50) { enemyBullet(tank.x, tank.y, my_x, my_y, true); }
+      if (tank.type == 3 && current_frame % 100 == 49 + std::rand() % 50) { enemyBullet(tank.x, tank.y, my_x, my_y, true); }
 
-      if ((tank.type == 1 || tank.type == 2) && current_time % 100 == std::rand() % 50) { tank.goal_x = my_x; tank.goal_y = my_y; }
-      if (tank.type == 4                     && current_time % 15  == std::rand() % 10) { tank.goal_x = my_x; tank.goal_y = my_y; }
+      if ((tank.type == 1 || tank.type == 2) && current_frame % 100 == std::rand() % 50) { tank.goal_x = my_x; tank.goal_y = my_y; }
+      if (tank.type == 4                     && current_frame % 15  == std::rand() % 10) { tank.goal_x = my_x; tank.goal_y = my_y; }
 
-      if (tank.goal_x != -1 && current_time % 15 == 0) {
+      if (tank.goal_x != -1 && current_frame % 15 == 0) {
         if(noCollision(tank.y, tank.x+1) && noCollision(tank.y, tank.x-1)) { tank.x += (tank.goal_x - tank.x) > 1 ? 1 : -1; }
         if(noCollision(tank.y+1, tank.x) && noCollision(tank.y-1, tank.x)) { tank.y += (tank.goal_y - tank.y) > 1 ? 1 : -1; }
       }
       
-      if (tank.type > 3 && current_time % 100 == 49 + std::rand() % 50) {
+      if (tank.type > 3 && current_frame % 100 == 49 + std::rand() % 50) {
         int to_x = ((float)(my_x - tank.x)) / 2.0f;
         int to_y = ((float)(my_y - tank.y)) / 2.0f;
         int finalx = tank.x + to_x - to_y;
@@ -567,8 +590,8 @@ int main(int argc, const char* argv[]) {
 
     for (int bullet_index=0; bullet_index<bullets.size(); bullet_index++) {
       auto& bullet = bullets[bullet_index];
-      bullet.x = round(linear_blend(bullet.start_x, bullet.destination_x, ((float)(current_time - bullet.start_time)) / (speedMultiplier * bullet.pathLength())));
-      bullet.y = round(linear_blend(bullet.start_y, bullet.destination_y, ((float)(current_time - bullet.start_time)) / (speedMultiplier * bullet.pathLength())));
+      bullet.x = round(linear_blend(bullet.start_x, bullet.destination_x, ((float)(current_frame - bullet.start_time)) / (speedMultiplier * bullet.pathLength())));
+      bullet.y = round(linear_blend(bullet.start_y, bullet.destination_y, ((float)(current_frame - bullet.start_time)) / (speedMultiplier * bullet.pathLength())));
       
       if(noCollision(bullet.y, bullet.x) == false) { 
         if (bullet.has_bounced) {  if(bullet.start_x != bullet.x && bullet.start_y != bullet.y) { bullet.hit = true; } }
@@ -580,7 +603,7 @@ int main(int argc, const char* argv[]) {
           bullet.destination_y = horizontal ? bullet.start_x : (bullet.destination_y - bullet.start_y) * 2;
           bullet.start_x = bullet.x;
           bullet.start_y = bullet.y;
-          bullet.start_time = current_time;
+          bullet.start_time = current_frame;
         }} 
       if(bullet.from_enemy && std::abs(bullet.x - my_x) < 2 && std::abs(bullet.y - my_y) < 2) { bullet.hit = true; lives = 0; } // bullet hit player
 
@@ -600,7 +623,7 @@ int main(int argc, const char* argv[]) {
     auto c = Canvas(140, 20);
     if (in_level == false) { return canvas(std::move(c)); }
 
-    if ((current_time / 4) % 8 == 0) {
+    if ((current_frame / 4) % 8 == 0) {
       c.DrawText(0,0,  "  .---.", Color::Blue);
       c.DrawText(0,4,  " /  |  \\  ", Color::Blue);
       c.DrawText(0,8,  ";   |   ;", Color::Blue);
@@ -608,7 +631,7 @@ int main(int argc, const char* argv[]) {
       c.DrawText(0,16, "  '---'", Color::Blue);
     }
     
-    if ((current_time / 4) % 8 == 1) {
+    if ((current_frame / 4) % 8 == 1) {
       c.DrawText(0,0,  "  .---.", Color::Blue);
       c.DrawText(0,4,  " /   / \\  ", Color::Blue);
       c.DrawText(0,8,  ";   /   ;", Color::Blue);
@@ -616,7 +639,7 @@ int main(int argc, const char* argv[]) {
       c.DrawText(0,16, "  '---'", Color::Blue);
     }
 
-    if ((current_time / 4) % 8 == 2) {
+    if ((current_frame / 4) % 8 == 2) {
       c.DrawText(0,0,  "  .---.", Color::Blue);
       c.DrawText(0,4,  " /     \\  ", Color::Blue);
       c.DrawText(0,8,  ";   ----;", Color::Blue);
@@ -624,7 +647,7 @@ int main(int argc, const char* argv[]) {
       c.DrawText(0,16, "  '---'", Color::Blue);
     }
 
-    if ((current_time / 4) % 8 == 3) {
+    if ((current_frame / 4) % 8 == 3) {
       c.DrawText(0,0,  "  .---.", Color::Blue);
       c.DrawText(0,4,  " /     \\  ", Color::Blue);
       c.DrawText(0,8,  ";   \\   ;", Color::Blue);
@@ -632,7 +655,7 @@ int main(int argc, const char* argv[]) {
       c.DrawText(0,16, "  '---'", Color::Blue);
     }
 
-    if ((current_time / 4) % 8 == 4) {
+    if ((current_frame / 4) % 8 == 4) {
       c.DrawText(0,0,  "  .---.", Color::Blue);
       c.DrawText(0,4,  " /     \\  ", Color::Blue);
       c.DrawText(0,8,  ";   |   ;", Color::Blue);
@@ -640,7 +663,7 @@ int main(int argc, const char* argv[]) {
       c.DrawText(0,16, "  '---'", Color::Blue);
     }
 
-    if ((current_time / 4) % 8 == 5) {
+    if ((current_frame / 4) % 8 == 5) {
       c.DrawText(0,0,  "  .---.", Color::Blue);
       c.DrawText(0,4,  " /     \\  ", Color::Blue);
       c.DrawText(0,8,  ";   /   ;", Color::Blue);
@@ -648,7 +671,7 @@ int main(int argc, const char* argv[]) {
       c.DrawText(0,16, "  '---'", Color::Blue);
     }
 
-    if ((current_time / 4) % 8 == 6) {
+    if ((current_frame / 4) % 8 == 6) {
       c.DrawText(0,0,  "  .---.", Color::Blue);
       c.DrawText(0,4,  " /     \\", Color::Blue);
       c.DrawText(0,8,  ";----   ;", Color::Blue);
@@ -656,7 +679,7 @@ int main(int argc, const char* argv[]) {
       c.DrawText(0,16, "  '---'", Color::Blue);
     }
 
-    if ((current_time / 4) % 8 >= 7) {
+    if ((current_frame / 4) % 8 >= 7) {
       c.DrawText(0,0,  "  .---.", Color::Blue);
       c.DrawText(0,4,  " /\\    \\", Color::Blue);
       c.DrawText(0,8,  ";  \\    ;", Color::Blue);
@@ -678,16 +701,16 @@ int main(int argc, const char* argv[]) {
 
     c.DrawText(20,16,"░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░", Color::Green4);
 
-    int post = current_time % 30;
+    int post = current_frame % 30;
   
     int dist = 0;
-    if (finished_timer != -1) { dist = linear_blend(120, 0.0, ((float)(finished_timer - current_time)) / 100.0); }
+    if (finished_timer != -1) { dist = linear_blend(120, 0.0, ((float)(finished_timer - current_frame)) / 100.0); }
 
     c.DrawText(20 + dist,4, "  __", Color::Blue);
     c.DrawText(20 + dist,8, "|\"\"\"\\-=", Color::Blue);
     c.DrawText(20 + dist,12,"(____)", Color::Blue);
 
-    if (current_time - lastshot_time < 20) {
+    if (current_frame - lastshot_time < 20) {
       c.DrawText(20 + dist,0, "         __,-.", Color::Blue);
       c.DrawText(20 + dist,4, "  __    ( .`-')", Color::Blue);
       c.DrawText(20 + dist,8, "|\"\"\"\\-=(_ (_,_)", Color::Blue);
@@ -712,8 +735,10 @@ int main(int argc, const char* argv[]) {
             text("Hover & click to "),
             text("       select level"),
             text(""),
+            text("1;" + std::to_string(my_precise_x)),
+            text("1;" + std::to_string(my_precise_y)),
             text("Level: " + std::to_string(current_level)),
-            text("Current time: " + std::to_string(current_time)),
+            text("Current time: " + std::to_string(current_frame)),
             text(""),
             text("Bullets left: " + std::to_string(bulletsLeft)),
             text("Tanks left: " + std::to_string(tanks.size())),
@@ -741,6 +766,7 @@ int main(int argc, const char* argv[]) {
       },
       &selected_tab);
 
+  // int slowdownMagic = 0;
   // This capture the last mouse position.
   auto tab_with_mouse = CatchEvent(tab, [&](Event e) {
     if (e.is_mouse()) {
@@ -750,14 +776,13 @@ int main(int argc, const char* argv[]) {
       mouse_y = std::max(4, std::min(mouse_y, screen_height - 8));
     }
 
-    if (current_time % 4 == 0) {
-      if (std::abs(mouse_x - my_x) > std::abs(mouse_y - my_y)){
-        if ((mouse_x - my_x) >=  2) {if(noCollision(my_y+0,my_x+1)) my_x += 1; }
-        if ((mouse_x - my_x) <= -2) {if(noCollision(my_y+0,my_x-1)) my_x -= 1; }
-      } else {
-        if ((mouse_y - my_y) >=  4) {if(noCollision(my_y+1,my_x+0)) my_y += 2; }
-        if ((mouse_y - my_y) <= -4) {if(noCollision(my_y-1,my_x+0)) my_y -= 2; }
-      }
+    float speed = 0.25f;
+    if (std::abs(mouse_x - my_x) > std::abs(mouse_y - my_y)){
+      if ((mouse_x - my_x) >=  2) { if(noCollision(my_y+0,my_x+1)) { my_precise_x += speed; my_x = int(my_precise_x); } }
+      if ((mouse_x - my_x) <= -2) { if(noCollision(my_y+0,my_x-1)) { my_precise_x -= speed; my_x = int(my_precise_x); } }
+    } else {
+      if ((mouse_y - my_y) >=  4) { if(noCollision(my_y+1,my_x+0)) { my_precise_y += speed; my_y = int(my_precise_y); } }
+      if ((mouse_y - my_y) <= -4) { if(noCollision(my_y-1,my_x+0)) { my_precise_y -= speed; my_y = int(my_precise_y); } }
     }
 
     // if (e.is_character()) {
@@ -789,14 +814,16 @@ int main(int argc, const char* argv[]) {
   });
 
   auto screen = ScreenInteractive::FitComponent();
-
+  
   bool refresh_ui_continue = true;
   std::thread refresh_ui([&] {
     while (refresh_ui_continue) {
       using namespace std::chrono_literals;
       std::this_thread::sleep_for(0.05s);
-      current_time++;
+      current_frame++;
+      // current_chrono = std::chrono::system_clock::now();
       screen.PostEvent(Event::Custom);
+      // previous_chrono = current_chrono;
     }
   });
 
